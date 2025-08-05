@@ -28,23 +28,25 @@ import (
 // ClusterParameters are the configurable fields of a Cluster.
 type ClusterParameters struct {
 	ConfigurableField string `json:"configurableField"`
-	
-	// Partition is like Region 
+
+	// Partition is like Region
 	Partition string `json:"Partition"`
+
+	// Projectid
+	ProjectID string `json:"Projectid"`
 
 	// Tenant is necessary
 	Tenant string `json:"Tenant"`
 
 	// Name for Cluster is necessary
 	Name string `json:"Name"`
-
 }
 
 // ClusterObservation are the observable fields of a Cluster.
 type ClusterObservation struct {
 	ConfigurableField string `json:"configurableField"`
 	ObservableField   string `json:"observableField,omitempty"`
-	State string `json:"state"`
+	State             string `json:"state"`
 }
 
 // A ClusterSpec defines the desired state of a Cluster.

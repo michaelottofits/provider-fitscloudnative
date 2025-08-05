@@ -253,13 +253,25 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotCluster)
 	}
 
+	var cfr = &models.V1ClusterCreateRequest{}
+	cfr.Name = &cr.Spec.ForProvider.Name
+	cfr.Tenant = &cr.Spec.ForProvider.Tenant
+	cfr.PartitionID = &cr.Spec.ForProvider.Partition
+	cfr.ProjectID = &cr.Spec.ForProvider.ProjectID
+
+	createrequest := cluster.NewCreateClusterParams()
+	createrequest.SetBody(cfr)
+
+	response, err := c.service.fCli.Cluster.CreateCluster(createrequest, nil)
+	cr.Status.AtProvider.State = *response.GetPayload().Status.LastOperation.State
+
 	fmt.Printf("Creating: %+v", cr)
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
 		// external resource. These will be stored as the connection secret.
 		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	}, err
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
