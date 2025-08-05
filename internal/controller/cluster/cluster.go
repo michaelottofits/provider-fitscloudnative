@@ -213,6 +213,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	response, err := c.service.fCli.Cluster.FindClusters(searchrequest, nil)
 
+	if err != nil {
+		fmt.Printf("Observing Error Find Cluster: %+v", err)
+	}
 	//if we found one cluster with tenant and cluster name, one not more !
 	if len(response.GetPayload()) != 1 {
 		return managed.ExternalObservation{
@@ -224,8 +227,6 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if response.GetPayload()[0].Status.LastOperation.State != nil {
 		cr.Status.SetConditions(xpv1.Available())
 	}
-
-	fmt.Printf("Observing Error Find Cluster: %+v", err)
 
 	// These fmt statements should be removed in the real implementation.
 	fmt.Printf("Observing: %+v", cr)
@@ -263,6 +264,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	createrequest.SetBody(cfr)
 
 	response, err := c.service.fCli.Cluster.CreateCluster(createrequest, nil)
+
+	if err != nil {
+		fmt.Printf("Create Error Cluster: %+v", err)
+	}
 	cr.Status.AtProvider.State = *response.GetPayload().Status.LastOperation.State
 
 	fmt.Printf("Creating: %+v", cr)
@@ -295,9 +300,31 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalDelete{}, errors.New(errNotCluster)
 	}
 
+	var cfr = &models.V1ClusterFindRequest{}
+	cfr.Name = &cr.Spec.ForProvider.Name
+	cfr.Tenant = &cr.Spec.ForProvider.Tenant
+
+	searchrequest := cluster.NewFindClustersParams()
+	searchrequest.SetBody(cfr)
+
+	response, err := c.service.fCli.Cluster.FindClusters(searchrequest, nil)
+
+	if err != nil {
+		fmt.Printf("Delete Error find Cluster: %+v", err)
+	}
+
+	deleterequest := cluster.NewDeleteClusterParams()
+	deleterequest.SetID(*response.GetPayload()[0].ID)
+
+	_, errdel := c.service.fCli.Cluster.DeleteCluster(deleterequest, nil)
+
+	if errdel != nil {
+		fmt.Printf("Delete Cluster: %+v", errdel)
+	}
+
 	fmt.Printf("Deleting: %+v", cr)
 
-	return managed.ExternalDelete{}, nil
+	return managed.ExternalDelete{}, err
 }
 
 func (c *external) Disconnect(ctx context.Context) error {
