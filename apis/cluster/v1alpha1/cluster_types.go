@@ -25,63 +25,74 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
-// MyTypeParameters are the configurable fields of a MyType.
-type MyTypeParameters struct {
+// ClusterParameters are the configurable fields of a Cluster.
+type ClusterParameters struct {
 	ConfigurableField string `json:"configurableField"`
+	
+	// Partition is like Region 
+	Partition string `json:"Partition"`
+
+	// Tenant is necessary
+	Tenant string `json:"Tenant"`
+
+	// Name for Cluster is necessary
+	Name string `json:"Name"`
+
 }
 
-// MyTypeObservation are the observable fields of a MyType.
-type MyTypeObservation struct {
+// ClusterObservation are the observable fields of a Cluster.
+type ClusterObservation struct {
 	ConfigurableField string `json:"configurableField"`
 	ObservableField   string `json:"observableField,omitempty"`
+	State string `json:"state"`
 }
 
-// A MyTypeSpec defines the desired state of a MyType.
-type MyTypeSpec struct {
+// A ClusterSpec defines the desired state of a Cluster.
+type ClusterSpec struct {
 	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       MyTypeParameters `json:"forProvider"`
+	ForProvider       ClusterParameters `json:"forProvider"`
 }
 
-// A MyTypeStatus represents the observed state of a MyType.
-type MyTypeStatus struct {
+// A ClusterStatus represents the observed state of a Cluster.
+type ClusterStatus struct {
 	xpv1.ResourceStatus `json:",inline"`
-	AtProvider          MyTypeObservation `json:"atProvider,omitempty"`
+	AtProvider          ClusterObservation `json:"atProvider,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// A MyType is an example API type.
+// A Cluster is an example API type.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="EXTERNAL-NAME",type="string",JSONPath=".metadata.annotations.crossplane\\.io/external-name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,template}
-type MyType struct {
+// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,fitscloudnative}
+type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MyTypeSpec   `json:"spec"`
-	Status MyTypeStatus `json:"status,omitempty"`
+	Spec   ClusterSpec   `json:"spec"`
+	Status ClusterStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// MyTypeList contains a list of MyType
-type MyTypeList struct {
+// ClusterList contains a list of Cluster
+type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []MyType `json:"items"`
+	Items           []Cluster `json:"items"`
 }
 
-// MyType type metadata.
+// Cluster type metadata.
 var (
-	MyTypeKind             = reflect.TypeOf(MyType{}).Name()
-	MyTypeGroupKind        = schema.GroupKind{Group: Group, Kind: MyTypeKind}.String()
-	MyTypeKindAPIVersion   = MyTypeKind + "." + SchemeGroupVersion.String()
-	MyTypeGroupVersionKind = SchemeGroupVersion.WithKind(MyTypeKind)
+	ClusterKind             = reflect.TypeOf(Cluster{}).Name()
+	ClusterGroupKind        = schema.GroupKind{Group: Group, Kind: ClusterKind}.String()
+	ClusterKindAPIVersion   = ClusterKind + "." + SchemeGroupVersion.String()
+	ClusterGroupVersionKind = SchemeGroupVersion.WithKind(ClusterKind)
 )
 
 func init() {
-	SchemeBuilder.Register(&MyType{}, &MyTypeList{})
+	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
 }

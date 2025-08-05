@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: storeconfigs.template.crossplane.io
+  name: storeconfigs.fitscloudnative.crossplane.io
 spec:
-  group: template.crossplane.io
+  group: fitscloudnative.crossplane.io
   names:
     categories:
     - crossplane

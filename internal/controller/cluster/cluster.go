@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package mytype
+package cluster
 
 import (
 	"context"
@@ -35,13 +35,13 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
-	"github.com/crossplane/provider-template/apis/sample/v1alpha1"
-	apisv1alpha1 "github.com/crossplane/provider-template/apis/v1alpha1"
-	"github.com/crossplane/provider-template/internal/features"
+	"github.com/crossplane/provider-fitscloudnative/apis/cluster/v1alpha1"
+	apisv1alpha1 "github.com/crossplane/provider-fitscloudnative/apis/v1alpha1"
+	"github.com/crossplane/provider-fitscloudnative/internal/features"
 )
 
 const (
-	errNotMyType    = "managed resource is not a MyType custom resource"
+	errNotCluster    = "managed resource is not a Cluster custom resource"
 	errTrackPCUsage = "cannot track ProviderConfig usage"
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
@@ -56,9 +56,9 @@ var (
 	newNoOpService = func(_ []byte) (interface{}, error) { return &NoOpService{}, nil }
 )
 
-// Setup adds a controller that reconciles MyType managed resources.
+// Setup adds a controller that reconciles Cluster managed resources.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1alpha1.MyTypeGroupKind)
+	name := managed.ControllerName(v1alpha1.ClusterGroupKind)
 
 	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
 	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
@@ -87,20 +87,20 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 
 	if o.MetricOptions != nil && o.MetricOptions.MRStateMetrics != nil {
 		stateMetricsRecorder := statemetrics.NewMRStateRecorder(
-			mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.MyTypeList{}, o.MetricOptions.PollStateMetricInterval,
+			mgr.GetClient(), o.Logger, o.MetricOptions.MRStateMetrics, &v1alpha1.ClusterList{}, o.MetricOptions.PollStateMetricInterval,
 		)
 		if err := mgr.Add(stateMetricsRecorder); err != nil {
-			return errors.Wrap(err, "cannot register MR state metrics recorder for kind v1alpha1.MyTypeList")
+			return errors.Wrap(err, "cannot register MR state metrics recorder for kind v1alpha1.ClusterList")
 		}
 	}
 
-	r := managed.NewReconciler(mgr, resource.ManagedKind(v1alpha1.MyTypeGroupVersionKind), opts...)
+	r := managed.NewReconciler(mgr, resource.ManagedKind(v1alpha1.ClusterGroupVersionKind), opts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1alpha1.MyType{}).
+		For(&v1alpha1.Cluster{}).
 		Complete(ratelimiter.NewReconciler(name, r, o.GlobalRateLimiter))
 }
 
@@ -118,9 +118,9 @@ type connector struct {
 // 3. Getting the credentials specified by the ProviderConfig.
 // 4. Using the credentials to form a client.
 func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.ExternalClient, error) {
-	cr, ok := mg.(*v1alpha1.MyType)
+	cr, ok := mg.(*v1alpha1.Cluster)
 	if !ok {
-		return nil, errors.New(errNotMyType)
+		return nil, errors.New(errNotCluster)
 	}
 
 	if err := c.usage.Track(ctx, mg); err != nil {
@@ -155,9 +155,9 @@ type external struct {
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mg.(*v1alpha1.MyType)
+	cr, ok := mg.(*v1alpha1.Cluster)
 	if !ok {
-		return managed.ExternalObservation{}, errors.New(errNotMyType)
+		return managed.ExternalObservation{}, errors.New(errNotCluster)
 	}
 
 	// These fmt statements should be removed in the real implementation.
@@ -181,9 +181,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 }
 
 func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mg.(*v1alpha1.MyType)
+	cr, ok := mg.(*v1alpha1.Cluster)
 	if !ok {
-		return managed.ExternalCreation{}, errors.New(errNotMyType)
+		return managed.ExternalCreation{}, errors.New(errNotCluster)
 	}
 
 	fmt.Printf("Creating: %+v", cr)
@@ -196,9 +196,9 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mg.(*v1alpha1.MyType)
+	cr, ok := mg.(*v1alpha1.Cluster)
 	if !ok {
-		return managed.ExternalUpdate{}, errors.New(errNotMyType)
+		return managed.ExternalUpdate{}, errors.New(errNotCluster)
 	}
 
 	fmt.Printf("Updating: %+v", cr)
@@ -211,9 +211,9 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mg.(*v1alpha1.MyType)
+	cr, ok := mg.(*v1alpha1.Cluster)
 	if !ok {
-		return managed.ExternalDelete{}, errors.New(errNotMyType)
+		return managed.ExternalDelete{}, errors.New(errNotCluster)
 	}
 
 	fmt.Printf("Deleting: %+v", cr)

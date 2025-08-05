@@ -4,18 +4,18 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: mytypes.sample.template.crossplane.io
+  name: clusters.cluster.fitscloudnative.crossplane.io
 spec:
-  group: sample.template.crossplane.io
+  group: cluster.fitscloudnative.crossplane.io
   names:
     categories:
     - crossplane
     - managed
-    - template
-    kind: MyType
-    listKind: MyTypeList
-    plural: mytypes
-    singular: mytype
+    - fitscloudnative
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -34,7 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: A MyType is an example API type.
+        description: A Cluster is an example API type.
         properties:
           apiVersion:
             description: |-
@@ -54,7 +54,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: A MyTypeSpec defines the desired state of a MyType.
+            description: A ClusterSpec defines the desired state of a Cluster.
             properties:
               deletionPolicy:
                 default: Delete
@@ -71,11 +71,23 @@ spec:
                 - Delete
                 type: string
               forProvider:
-                description: MyTypeParameters are the configurable fields of a MyType.
+                description: ClusterParameters are the configurable fields of a Cluster.
                 properties:
+                  Name:
+                    description: Name for Cluster is necessary
+                    type: string
+                  Partition:
+                    description: Partition is like Region
+                    type: string
+                  Tenant:
+                    description: Tenant is necessary
+                    type: string
                   configurableField:
                     type: string
                 required:
+                - Name
+                - Partition
+                - Tenant
                 - configurableField
                 type: object
               managementPolicies:
@@ -246,10 +258,10 @@ spec:
             - forProvider
             type: object
           status:
-            description: A MyTypeStatus represents the observed state of a MyType.
+            description: A ClusterStatus represents the observed state of a Cluster.
             properties:
               atProvider:
-                description: MyTypeObservation are the observable fields of a MyType.
+                description: ClusterObservation are the observable fields of a Cluster.
                 properties:
                   configurableField:
                     type: string
