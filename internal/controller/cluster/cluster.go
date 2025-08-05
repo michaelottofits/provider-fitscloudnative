@@ -18,6 +18,7 @@ package cluster
 
 import (
 	"context"
+
 	"fmt"
 
 	"github.com/crossplane/crossplane-runtime/pkg/feature"
@@ -35,13 +36,19 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/crossplane/crossplane-runtime/pkg/statemetrics"
 
+	"github.com/Nerzal/gocloak/v13"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/provider-fitscloudnative/apis/cluster/v1alpha1"
 	apisv1alpha1 "github.com/crossplane/provider-fitscloudnative/apis/v1alpha1"
 	"github.com/crossplane/provider-fitscloudnative/internal/features"
+	cloudgo "github.com/fi-ts/cloud-go"
+	cloudgoc "github.com/fi-ts/cloud-go/api/client"
+	"github.com/fi-ts/cloud-go/api/client/cluster"
+	"github.com/fi-ts/cloud-go/api/models"
 )
 
 const (
-	errNotCluster    = "managed resource is not a Cluster custom resource"
+	errNotCluster   = "managed resource is not a Cluster custom resource"
 	errTrackPCUsage = "cannot track ProviderConfig usage"
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
@@ -50,10 +57,37 @@ const (
 )
 
 // A NoOpService does nothing.
-type NoOpService struct{}
+type FitsCloudnativeService struct {
+	fCli *cloudgoc.CloudAPI
+}
+
+type KeycloakAuth struct {
+	KeycloakURL      string
+	KeycloakUser     string
+	KeycloakPassword string
+	KeycloakClientID string
+	KeycloakSecret   string
+	KeycloakRealm    string
+}
 
 var (
-	newNoOpService = func(_ []byte) (interface{}, error) { return &NoOpService{}, nil }
+	newFitsCloudnativeService = func(apiurl string, keycloakAuth KeycloakAuth) (*FitsCloudnativeService, error) {
+
+		client := gocloak.NewClient(keycloakAuth.KeycloakURL)
+		ctx := context.Background()
+
+		usertoken, err := client.Login(ctx, keycloakAuth.KeycloakClientID, keycloakAuth.KeycloakSecret, keycloakAuth.KeycloakRealm, keycloakAuth.KeycloakUser, keycloakAuth.KeycloakPassword)
+
+		if err != nil {
+			return nil, err
+		}
+
+		c, err := cloudgo.NewClient(apiurl, usertoken.IDToken, "")
+
+		return &FitsCloudnativeService{
+			fCli: c,
+		}, err
+	}
 )
 
 // Setup adds a controller that reconciles Cluster managed resources.
@@ -69,7 +103,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithExternalConnecter(&connector{
 			kube:         mgr.GetClient(),
 			usage:        resource.NewProviderConfigUsageTracker(mgr.GetClient(), &apisv1alpha1.ProviderConfigUsage{}),
-			newServiceFn: newNoOpService}),
+			newServiceFn: newFitsCloudnativeService}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -109,7 +143,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (interface{}, error)
+	newServiceFn func(apiUrl string, kc KeycloakAuth) (*FitsCloudnativeService, error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -138,7 +172,17 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errGetCreds)
 	}
 
-	svc, err := c.newServiceFn(data)
+	//TODO get here cloudapi url user and password for keycloak to connect from provider cd
+	kc := KeycloakAuth{
+		KeycloakURL:      pc.Spec.KeycloakURL,
+		KeycloakRealm:    pc.Spec.KeycloakRealm,
+		KeycloakClientID: pc.Spec.KeycloakClientID,
+		KeycloakSecret:   pc.Spec.KeycloakClientSecret,
+		KeycloakUser:     pc.Spec.KeycloakUser,
+		KeycloakPassword: string(data),
+	}
+
+	svc, err := c.newServiceFn(pc.Spec.ApiURL, kc)
 	if err != nil {
 		return nil, errors.Wrap(err, errNewClient)
 	}
@@ -151,7 +195,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service interface{}
+	service *FitsCloudnativeService
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -159,6 +203,29 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotCluster)
 	}
+
+	var cfr = &models.V1ClusterFindRequest{}
+	cfr.Name = &cr.Spec.ForProvider.Name
+	cfr.Tenant = &cr.Spec.ForProvider.Tenant
+
+	searchrequest := cluster.NewFindClustersParams()
+	searchrequest.SetBody(cfr)
+
+	response, err := c.service.fCli.Cluster.FindClusters(searchrequest, nil)
+
+	//if we found one cluster with tenant and cluster name, one not more !
+	if len(response.GetPayload()) != 1 {
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
+
+	// TODO Check what state is cluster is available
+	if response.GetPayload()[0].Status.LastOperation.State != nil {
+		cr.Status.SetConditions(xpv1.Available())
+	}
+
+	fmt.Printf("Observing Error Find Cluster: %+v", err)
 
 	// These fmt statements should be removed in the real implementation.
 	fmt.Printf("Observing: %+v", cr)

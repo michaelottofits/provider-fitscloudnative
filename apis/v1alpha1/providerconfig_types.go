@@ -28,7 +28,13 @@ import (
 // A ProviderConfigSpec defines the desired state of a ProviderConfig.
 type ProviderConfigSpec struct {
 	// Credentials required to authenticate to this provider.
-	Credentials ProviderCredentials `json:"credentials"`
+	Credentials          ProviderCredentials `json:"credentials"`
+	ApiURL               string              `json:"apiurl"`
+	KeycloakRealm        string              `json:"keycloakrealm"`
+	KeycloakClientID     string              `json:"keycloakclientid"`
+	KeycloakClientSecret string              `json:"keycloakclientsecret"`
+	KeycloakURL          string              `json:"keycloakurl"`
+	KeycloakUser         string              `json:"keycloakuser"`
 }
 
 // ProviderCredentials required to authenticate.
