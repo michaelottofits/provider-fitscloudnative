@@ -172,7 +172,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errGetCreds)
 	}
 
-	//TODO get here cloudapi url user and password for keycloak to connect from provider cd
+	// TODO get here cloudapi url user and password for keycloak to connect from provider cd
 	kc := KeycloakAuth{
 		KeycloakURL:      pc.Spec.KeycloakURL,
 		KeycloakRealm:    pc.Spec.KeycloakRealm,
@@ -216,7 +216,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if err != nil {
 		fmt.Printf("Observing Error Find Cluster: %+v", err)
 	}
-	//if we found one cluster with tenant and cluster name, one not more !
+	// if we found one cluster with tenant and cluster name, one not more !
 	if len(response.GetPayload()) != 1 {
 		return managed.ExternalObservation{
 			ResourceExists: false,

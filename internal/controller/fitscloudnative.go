@@ -18,10 +18,9 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
-	ctrl "sigs.k8s.io/controller-runtime"
-
-	"github.com/crossplane/provider-fitscloudnative/internal/controller/config"
 	"github.com/crossplane/provider-fitscloudnative/internal/controller/cluster"
+	"github.com/crossplane/provider-fitscloudnative/internal/controller/config"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // Setup creates all FitsCloudnative controllers with the supplied logger and adds them to
