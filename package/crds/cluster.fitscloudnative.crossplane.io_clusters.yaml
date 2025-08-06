@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.5
+    controller-gen.kubebuilder.io/version: v0.18.0
   name: clusters.cluster.fitscloudnative.crossplane.io
 spec:
   group: cluster.fitscloudnative.crossplane.io
@@ -79,6 +79,9 @@ spec:
                   Partition:
                     description: Partition is like Region
                     type: string
+                  Projectid:
+                    description: Projectid
+                    type: string
                   Tenant:
                     description: Tenant is necessary
                     type: string
@@ -87,6 +90,7 @@ spec:
                 required:
                 - Name
                 - Partition
+                - Projectid
                 - Tenant
                 - configurableField
                 type: object

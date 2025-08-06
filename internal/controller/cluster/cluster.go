@@ -216,11 +216,10 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	if err != nil {
 		fmt.Printf("Observing Error Find Cluster: %+v", err)
 	}
+
 	// if we found one cluster with tenant and cluster name, one not more !
-	if len(response.GetPayload()) != 1 {
-		return managed.ExternalObservation{
-			ResourceExists: false,
-		}, nil
+	if len(response.GetPayload()) == 0 && err == nil {
+		return managed.ExternalObservation{ResourceExists: false}, nil
 	}
 
 	// TODO Check what state is cluster is available
@@ -254,11 +253,43 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotCluster)
 	}
 
+	var mname string = "debian"
+	var mversion string = "12.0.20250725"
+
+	machineImage := models.V1MachineImage{}
+	machineImage.Name = &mname
+	machineImage.Version = &mversion
+
 	var cfr = &models.V1ClusterCreateRequest{}
+
+	var version string = "1.32.7"
+	var purpose string = "evaluation"
+	var minimum int32 = 1
+	var maximum int32 = 1
+	var maxsurge string = "1"
+	var maxunavailable string = "0"
+	var machinetype string = ""
+
 	cfr.Name = &cr.Spec.ForProvider.Name
 	cfr.Tenant = &cr.Spec.ForProvider.Tenant
 	cfr.PartitionID = &cr.Spec.ForProvider.Partition
 	cfr.ProjectID = &cr.Spec.ForProvider.ProjectID
+	cfr.Purpose = &purpose
+
+	cfr.Kubernetes = &models.V1Kubernetes{
+		Version:                    &version,
+		DefaultPodSecurityStandard: nil,
+	}
+
+	cfr.Workers = []*models.V1Worker{
+		{
+			Minimum:        &minimum,
+			Maximum:        &maximum,
+			MaxSurge:       &maxsurge,
+			MaxUnavailable: &maxunavailable,
+			MachineType:    &machinetype,
+			MachineImage:   &machineImage,
+		}}
 
 	createrequest := cluster.NewCreateClusterParams()
 	createrequest.SetBody(cfr)

@@ -27,8 +27,6 @@ import (
 
 // ClusterParameters are the configurable fields of a Cluster.
 type ClusterParameters struct {
-	ConfigurableField string `json:"configurableField"`
-
 	// Partition is like Region
 	Partition string `json:"Partition"`
 
