@@ -100,6 +100,12 @@ dev: $(KIND) $(KUBECTL)
 	@$(INFO) Starting Provider FitsCloudnative controllers
 	@$(GO) run cmd/provider/main.go --debug
 
+devminikube: $(KIND) $(KUBECTL)
+	@$(INFO) Installing Provider FitsCloudnative CRDs
+	@$(KUBECTL) apply -R -f package/crds
+	@$(INFO) Starting Provider FitsCloudnative controllers
+	@$(GO) run cmd/provider/main.go --debug
+
 dev-clean: $(KIND) $(KUBECTL)
 	@$(INFO) Deleting kind cluster
 	@$(KIND) delete cluster --name=$(PROJECT_NAME)-dev
